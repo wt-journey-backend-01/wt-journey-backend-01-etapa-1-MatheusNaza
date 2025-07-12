@@ -1,90 +1,65 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs'); 
+const fs = require('fs');
 
 const app = express();
 const PORT = 3000;
 
 // MIDDLEWARES
+// Middleware para servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware para interpretar o corpo de requisições POST com dados de formulário
 app.use(express.urlencoded({ extended: true }));
 
 
 // ROTAS
+// Rota Raiz (GET /): Serve a página principal do cardápio.
 app.get('/', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// Rota de Sugestão (GET /sugestao): SALVA O LANCHE NO JSON
+// Rota de Sugestão (GET /sugestao): Processa o formulário de sugestão.
 app.get('/sugestao', (req, res) => {
+    // Captura os dados da query string
     const { nome, ingredientes } = req.query;
 
-    const lanchesFilePath = path.join(__dirname, 'public', 'data', 'lanches.json');
-
-    // 2. Le o arquivo JSON existente
-    fs.readFile(lanchesFilePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Erro ao ler o arquivo de lanches.');
-        }
-
-        // 3. Converte o conteúdo do arquivo para um objeto JavaScript
-        const lanches = JSON.parse(data);
-
-        // 4. Cria o novo lanche e o adicionamos ao array
-        const novoId = lanches.length > 0 ? lanches[lanches.length - 1].id + 1 : 1;
-        const novoLanche = {
-            id: novoId,
-            nome: String(nome),
-            ingredientes: String(ingredientes)
-        };
-        lanches.push(novoLanche);
-
-        // 5. Converte o array atualizado de volta para uma string JSON formatada
-        const dadosAtualizados = JSON.stringify(lanches, null, 2);
-
-        // 6. Escreve os dados atualizados de volta no arquivo
-        fs.writeFile(lanchesFilePath, dadosAtualizados, 'utf8', (writeErr) => {
-            if (writeErr) {
-                console.error(writeErr);
-                return res.status(500).send('Erro ao salvar o novo lanche.');
-            }
-
-            // 7. Se tudo deu certo, envia a página de agradecimento
-            res.status(200).send(`
-                <!DOCTYPE html>
-                <html lang="pt-BR">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Obrigado pela Sugestão! - DevBurger</title>
-                    <link rel="stylesheet" href="/css/style.css">
-                </head>
-                <body>
-                    <div class="container">
-                        <h1>Sugestão Salva com Sucesso!</h1>
-                        <div class="thank-you-box">
-                            <p>Sua deliciosa sugestão de lanche foi adicionada ao nosso cardápio de ideias:</p>
-                            <p><strong>Nome:</strong> ${novoLanche.nome}</p>
-                            <p><strong>Ingredientes:</strong> ${novoLanche.ingredientes}</p>
-                            <p>Vá para a <a href="/api/lanches" target="_blank">API de Lanches</a> para ver sua sugestão!</p>
-                        </div>
-                        <a href="/">Sugerir outro lanche</a>
-                    </div>
-                </body>
-                </html>
-            `);
-        });
-    });
+    // Gera uma página de agradecimento dinâmica
+    res.status(200).send(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Obrigado pela Sugestão! - DevBurger</title>
+            <link rel="stylesheet" href="/css/style.css">
+        </head>
+        <body>
+            <div class="container">
+                <h1>Obrigado pela sua sugestão!</h1>
+                <div class="thank-you-box">
+                    <p>Recebemos sua deliciosa sugestão de lanche:</p>
+                    <p><strong>Nome:</strong> ${nome}</p>
+                    <p><strong>Ingredientes:</strong> ${ingredientes}</p>
+                    <p>Nossa equipe de chefs irá analisar com carinho!</p>
+                </div>
+                <a href="/">Voltar ao Cardápio</a>
+            </div>
+        </body>
+        </html>
+    `);
 });
 
-// Rota de Contato (GET /contato)
+// Rota de Contato (GET /contato): Serve a página com o formulário de contato.
 app.get('/contato', (req, res) => {
     res.status(200).sendFile(path.join(__dirname, 'views', 'contato.html'));
 });
 
-// Rota de Contato (POST /contato)
+// Rota de Contato (POST /contato): Recebe os dados do formulário de contato.
 app.post('/contato', (req, res) => {
+    // Captura os dados do corpo da requisição
     const { nome, email, assunto, mensagem } = req.body;
+    
+    // Simula o processamento e exibe uma página de confirmação dinâmica
     res.status(200).send(`
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -98,6 +73,9 @@ app.post('/contato', (req, res) => {
                 <h1>Mensagem Recebida!</h1>
                 <div class="thank-you-box">
                     <p>Olá, <strong>${nome}</strong>. Agradecemos por seu contato!</p>
+                    <p>Recebemos sua mensagem sobre "<strong>${assunto}</strong>" e em breve retornaremos no e-mail <strong>${email}</strong>, se necessário.</p>
+                    <hr>
+                    <p><em>Sua mensagem: "${mensagem}"</em></p>
                 </div>
                 <a href="/">Voltar ao Cardápio</a>
             </div>
@@ -106,15 +84,38 @@ app.post('/contato', (req, res) => {
     `);
 });
 
-// Rota de lanches (GET /data/lanches)
-app.get('/data/lanches', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'public', 'data', 'lanches.json'));
+// Rota de API (GET /api/lanches): Retorna a lista de lanches em JSON.
+app.get('/api/lanches', (req, res) => {
+    const lanchesFilePath = path.join(__dirname, 'public', 'data', 'lanches.json');
+
+    fs.readFile(lanchesFilePath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erro ao ler o arquivo de lanches.' });
+        }
+
+        let lanches;
+        try {
+            lanches = JSON.parse(data);
+        } catch (parseErr) {
+            return res.status(500).json({ error: 'Erro ao processar os dados de lanches.' });
+        }
+
+        if (lanches.length < 3) {
+            return res.status(400).json({ error: 'Menos de 3 lanches disponíveis.' });
+        }
+
+        res.status(200).json(lanches);
+    });
 });
 
-// Middleware para Tratamento de Erro 404
+
+// Middleware para Tratamento de Erro 404 (Página Não Encontrada)
 app.use((req, res) => {
-    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+    if (lanches.length < 3) {
+    return res.status(400).json({ error: 'Menos de 3 lanches disponíveis.' });
+}res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
+
 
 // INICIALIZAÇÃO DO SERVIDOR
 app.listen(PORT, () => {
