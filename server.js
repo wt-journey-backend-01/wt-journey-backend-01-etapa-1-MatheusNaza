@@ -6,62 +6,81 @@ const app = express();
 const PORT = 3000;
 
 // MIDDLEWARES
-// Middleware para servir arquivos estáticos da pasta 'public'
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Middleware para interpretar o corpo de requisições POST com dados de formulário
 app.use(express.urlencoded({ extended: true }));
 
+//Função reutilizável para responder quando o método HTTP não é permitido.
+const methodNotAllowed = (req, res) => {
+    res.status(405).json({
+        error: 'Método Não Permitido',
+        message: `O método ${req.method} não é permitido para a rota ${req.originalUrl}.`
+    });
+};
 
-// ROTAS
-// Rota Raiz (GET /): Serve a página principal do cardápio.
-app.get('/', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
-});
+// --- ROTAS REFATORADAS COM app.route() ---
 
-// Rota de Sugestão (GET /sugestao): Processa o formulário de sugestão.
-app.get('/sugestao', (req, res) => {
-    // Captura os dados da query string
-    const { nome, ingredientes } = req.query;
+// Rota Raiz: Só permite GET
+app.route('/')
+    .get((req, res) => {
+        res.status(200).sendFile(path.join(__dirname, 'views', 'index.html'));
+    })
+    .all(methodNotAllowed); // Rejeita POST, PUT, DELETE, etc.
 
-    // Gera uma página de agradecimento dinâmica
-    res.status(200).send(`
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-            <meta charset="UTF-8">
-            <title>Obrigado pela Sugestão! - DevBurger</title>
-            <link rel="stylesheet" href="/css/style.css">
-        </head>
-        <body>
-            <div class="container">
-                <h1>Obrigado pela sua sugestão!</h1>
-                <div class="thank-you-box">
-                    <p>Recebemos sua deliciosa sugestão de lanche:</p>
-                    <p><strong>Nome:</strong> ${nome}</p>
-                    <p><strong>Ingredientes:</strong> ${ingredientes}</p>
-                    <p>Nossa equipe de chefs irá analisar com carinho!</p>
-                </div>
-                <a href="/">Voltar ao Cardápio</a>
-            </div>
-        </body>
-        </html>
-    `);
-});
+// Rota de Sugestão: Só permite GET
+app.route('/sugestao')
+    .get((req, res) => {
+        // ... (lógica para adicionar lanche ao JSON, como já implementado)
+        const { nome, ingredientes } = req.query;
+        const lanchesFilePath = path.join(__dirname, 'public', 'data', 'lanches.json');
+        fs.readFile(lanchesFilePath, 'utf8', (err, data) => {
+            if (err) return res.status(500).send('Erro ao ler o arquivo.');
+            let lanches = [];
+            if (data) lanches = JSON.parse(data);
+            const novoId = lanches.length > 0 ? lanches[lanches.length - 1].id + 1 : 1;
+            lanches.push({ id: novoId, nome, ingredientes });
+            fs.writeFile(path.join(__dirname, 'public', 'data', 'lanches.json'), JSON.stringify(lanches, null, 2), 'utf8', (writeErr) => {
+                if (writeErr) return res.status(500).send('Erro ao salvar o lanche.');
+                res.status(200).send(
+                `
+                    <!DOCTYPE html>
+                    <html lang="pt-BR">
+                        <head>
+                            <meta charset="UTF-8">
+                            <title>Obrigado pela Sugestão! - DevBurger</title>
+                            <link rel="stylesheet" href="/css/style.css">
+                        </head>
+                        <body>
+                            <div class="container">
+                                <h1>Obrigado pela sua sugestão!</h1>
+                                <div class="thank-you-box">
+                                    <p>Recebemos sua deliciosa sugestão de lanche:</p>
+                                    <p><strong>Nome:</strong> ${nome}</p>
+                                    <p><strong>Ingredientes:</strong> ${ingredientes}</p>
+                                    <p>Nossa equipe de chefs irá analisar com carinho!</p>
+                                </div>
+                                <a href="/">Voltar ao Cardápio</a>
+                            </div>
+                        </body>
+                    </html>
+                `
+                );
+            });
+        });
+    })
+    .all(methodNotAllowed);
 
-// Rota de Contato (GET /contato): Serve a página com o formulário de contato.
-app.get('/contato', (req, res) => {
-    res.status(200).sendFile(path.join(__dirname, 'views', 'contato.html'));
-});
-
-// Rota de Contato (POST /contato): Recebe os dados do formulário de contato.
-app.post('/contato', (req, res) => {
-    // Captura os dados do corpo da requisição
-    const { nome, email, assunto, mensagem } = req.body;
-    
-    // Simula o processamento e exibe uma página de confirmação dinâmica
-    res.status(200).send(`
-        <!DOCTYPE html>
+// Rota de Contato: Permite GET (para ver o form) e POST (para enviar o form)
+app.route('/contato')
+    .get((req, res) => {
+        res.status(200).sendFile(path.join(__dirname, 'views', 'contato.html'));
+    })
+    .post((req, res) => {
+        const { nome } = req.body;
+        const { email } = req.body;
+        const { assunto } = req.body;
+        const { mensagem } = req.body;
+        res.status(200).send(`
+            <!DOCTYPE html>
         <html lang="pt-BR">
         <head>
             <meta charset="UTF-8">
@@ -73,49 +92,40 @@ app.post('/contato', (req, res) => {
                 <h1>Mensagem Recebida!</h1>
                 <div class="thank-you-box">
                     <p>Olá, <strong>${nome}</strong>. Agradecemos por seu contato!</p>
-                    <p>Recebemos sua mensagem sobre "<strong>${assunto}</strong>" e em breve retornaremos no e-mail <strong>${email}</strong>, se necessário.</p>
-                    <hr>
+                    <p>Recebemos sua mensagem sobre "<strong>${assunto}</strong>" e em breve retornaremos no e-mail <strong>${email}</strong>, se necessário.</p><hr>
                     <p><em>Sua mensagem: "${mensagem}"</em></p>
-                </div>
+                     </div>
                 <a href="/">Voltar ao Cardápio</a>
             </div>
         </body>
         </html>
-    `);
-});
+        `);
+    })
+    .all(methodNotAllowed);
 
-// Rota de API (GET /api/lanches): Retorna a lista de lanches em JSON.
-app.get('/api/lanches', (req, res) => {
-    const lanchesFilePath = path.join(__dirname, 'public', 'data', 'lanches.json');
+// Rota de API de Lanches: Só permite GET
+app.route('/api/lanches')
+    .get((req, res) => {
+        // ... (lógica de leitura e validação do JSON, como já implementado)
+        const lanchesFilePath = path.join(__dirname, 'public', 'data', 'lanches.json');
+        fs.readFile(lanchesFilePath, 'utf8', (err, data) => {
+            if (err) return res.status(500).json({ error: 'Erro interno.' });
+            try {
+                const lanches = JSON.parse(data);
+                if (lanches.length < 3) return res.status(400).json({ error: 'Dados insuficientes.' });
+                res.status(200).json(lanches);
+            } catch (parseErr) {
+                return res.status(500).json({ error: 'Dados corrompidos.' });
+            }
+        });
+    })
+    .all(methodNotAllowed);
 
-    fs.readFile(lanchesFilePath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erro ao ler o arquivo de lanches.' });
-        }
-
-        let lanches;
-        try {
-            lanches = JSON.parse(data);
-        } catch (parseErr) {
-            return res.status(500).json({ error: 'Erro ao processar os dados de lanches.' });
-        }
-
-        if (lanches.length < 3) {
-            return res.status(400).json({ error: 'Menos de 3 lanches disponíveis.' });
-        }
-
-        res.status(200).json(lanches);
-    });
-});
-
-
-// Middleware para Tratamento de Erro 404 (Página Não Encontrada)
+// Middleware para Tratamento de Erro 404 (Rotas que não existem)
+// Este middleware só será alcançado se nenhuma das rotas acima corresponder.
 app.use((req, res) => {
-    if (lanches.length < 3) {
-    return res.status(400).json({ error: 'Menos de 3 lanches disponíveis.' });
-}res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+    res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
-
 
 // INICIALIZAÇÃO DO SERVIDOR
 app.listen(PORT, () => {
