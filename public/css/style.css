@@ -1,0 +1,163 @@
+/* Importando fontes modernas do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Lato:wght@400;700&display=swap');
+
+/* --- Variáveis de Cor --- */
+:root {
+    --primary-color: #f57c00; /* Laranja vibrante */
+    --primary-hover: #ef6c00;
+    --background-color: #f8f9fa; /* Cinza muito claro */
+    --card-background: #ffffff; /* Branco */
+    --text-color: #212529; /* Cinza escuro (quase preto) */
+    --subtle-text-color: #6c757d; /* Cinza médio */
+    --border-color: #dee2e6;
+}
+
+/* --- Estilos Gerais --- */
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 2rem;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    background-color: var(--card-background);
+    padding: 2.5rem 3rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Tipografia --- */
+h1, h2 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+h1 {
+    font-size: 2.5rem;
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+h2 {
+    font-size: 1.75rem;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+p {
+    margin-bottom: 1.5rem;
+    color: var(--subtle-text-color);
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+}
+
+nav {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+nav a {
+    margin: 0 1rem;
+}
+
+/* --- Formulários --- */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+label {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    margin-bottom: -0.5rem;
+}
+
+input[type="text"],
+input[type="email"],
+textarea {
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Lato', sans-serif;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%; /* Ocupa toda a largura */
+    box-sizing: border-box; /* Garante que o padding não afete a largura */
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.2);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 140px;
+}
+
+button[type="submit"] {
+    background: linear-gradient(45deg, var(--primary-color), #ff9800);
+    color: var(--card-background);
+    font-weight: 700;
+    font-size: 1.1rem;
+    font-family: 'Poppins', sans-serif;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Páginas de Agradecimento --- */
+.thank-you-box {
+    background-color: #fff9f2;
+    border-left: 5px solid var(--primary-color);
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.thank-you-box p {
+    color: var(--text-color);
+    margin: 0.5rem 0;
+}
+
+.thank-you-box strong {
+    color: var(--primary-hover);
+}
